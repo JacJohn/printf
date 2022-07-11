@@ -1,51 +1,80 @@
+#include <stdarg.h>
+#include <unistd.h>
 #include "main.h"
 /**
- * _printf - function that prints based on format specifier
- * @format: takes in format specifier
- * Return: return pointer to index
+ * find_function - function that finds formats for _printf
+ * @format: format (char, string, int, dec)
+ * Return: 0
  */
+
+int (*find_function(const char *format))(va_list)
+{
+	unsigned int i = 0;
+	code_f find_f[] = {
+		{"c", print_char},
+		{"s", print_string},
+		{"i", print_int},
+		{"d", print_dec},
+		{"b", print_bin},
+		{"u", print_unsig},
+		{"o", print_octal},
+		{"x", print_x},
+		{"X", print_X},
+		{"r", print_rev},
+		{"R", print_rot13},
+		{NULL, NULL}
+	};
+
+	while (find_f[i].sc)
+	{
+		if (find_f[i].sc[0] == (*format))
+			return (find_f[i].f);
+		i++;
+	}
+	return (NULL);
+}
+
+/**
+ * _printf - function to produce output
+ * @format: format (char, string, int, dec)
+ * Return: size of output text
+ */
+
 int _printf(const char *format, ...)
 {
-	char buffer[1024];
-	int i, j = 0, a = 0, *index = &a;
-	va_list valist;
-	vtype_t spec[] = {
-		{'c', format_c}, {'d', format_d}, {'s', format_s}, {'i', format_d},
-		{'u', format_u}, {'%', format_perc}, {'x', format_h}, {'X', format_ch},
-		{'o', format_o}, {'b', format_b}, {'p', format_p}, {'r', format_r},
-		{'R', format_R}, {'\0', NULL}
-	};
-	if (!format)
+	va_list list;
+	int (*f)(va_list);
+	unsigned int i = 0, cprint = 0;
+
+	if (format == NULL)
 		return (-1);
-	va_start(valist, format);
-	for (i = 0; format[i] != '\0'; i++)
+	va_start(list, format);
+	while (format[i])
 	{
-		for (; format[i] != '%' && format[i] != '\0'; *index += 1, i++)
+		while (format[i] != '%' && format[i])
 		{
-			if (*index == 1024)
-			{
-				_write_buffer(buffer, index);
-				reset_buffer(buffer);
-				*index = 0;
-			}
-			buffer[*index] = format[i];
+			_putchar(format[i]);
+			cprint++;
+			i++;
 		}
 		if (format[i] == '\0')
-			break;
-		if (format[i] == '%')
-		{       i++;
-			for (j = 0; spec[j].tp != '\0'; j++)
-			{
-				if (format[i] == spec[j].tp)
-				{
-					spec[j].f(valist, buffer, index);
-					break;
-				}
-			}
+			return (cprint);
+		f = find_function(&format[i + 1]);
+		if (f != NULL)
+		{
+			cprint += f(list);
+			i += 2;
+			continue;
 		}
+		if (!format[i + 1])
+			return (-1);
+		_putchar(format[i]);
+		cprint++;
+		if (format[i + 1] == '%')
+			i += 2;
+		else
+			i++;
 	}
-	va_end(valist);
-	buffer[*index] = '\0';
-	_write_buffer(buffer, index);
-	return (*index);
+	va_end(list);
+	return (cprint);
 }
