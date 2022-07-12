@@ -1,49 +1,37 @@
 #include "main.h"
+
 /**
- * _printf - function that prints based on format specifier
- * @format: takes in format specifier
- * Return: return pointer to index
+ * _printf - Receives the main string and all the necessary parameters to
+ * print a formated string
+ * @format: A string containing all the desired characters
+ * Return: A total count of the characters printed
  */
 int _printf(const char *format, ...)
 {
-	char buffer[1024];
-	int i, j = 0, a = 0, *index = &a;
-	va_list valist;
-	vtype_t spec[] = {
-		{'c', format_c}, {'d', format_d}, {'s', format_s}, {'i', format_d},
-		{'u', format_u}, {'%', format_perc}, {'x', format_h}, {'X', format_ch},
-		{'o', format_o}, {'b', format_b}, {'p', format_p}, {'r', format_r},
-		{'R', format_R}, {'\0', NULL}
+	int printed_chars;
+	conver_t f_list[] = {
+		{"c", print_char},
+		{"s", print_string},
+		{"%", print_percent},
+		{"d", print_integer},
+		{"i", print_integer},
+		{"b", print_binary},
+		{"r", print_reversed},
+		{"R", rot13},
+		{"u", unsigned_integer},
+		{"o", print_octal},
+		{"x", print_hex},
+		{"X", print_heX},
+		{NULL, NULL}
 	};
-	if (!format)
+	va_list arg_list;
+
+	if (format == NULL)
 		return (-1);
-	va_start(valist, format);
-	for (i = 0; format[i] != '\0'; i++)
-	{
-		for (; format[i] != '%' && format[i] != '\0'; *index += 1, i++)
-		{
-			if (*index == 1024)
-			{       _write_buffer(buffer, index);
-				reset_buffer(buffer);
-				*index = 0;
-			}
-			buffer[*index] = format[i];
-		}
-		if (format[i] == '\0')
-			break;
-		if (format[i] == '%')
-		{       i++;
-			for (j = 0; spec[j].tp != '\0'; j++)
-			{
-				if (format[i] == spec[j].tp)
-				{       spec[j].f(valist, buffer, index);
-					break;
-				}
-			}
-		}
-	}
-	va_end(valist);
-	buffer[*index] = '\0';
-	_write_buffer(buffer, index);
-	return (*index);
+
+	va_start(arg_list, format);
+	/*Calling parser function*/
+	printed_chars = parser(format, f_list, arg_list);
+	va_end(arg_list);
+	return (printed_chars);
 }
